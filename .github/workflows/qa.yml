@@ -1,0 +1,50 @@
+name: QA
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e '.[pipeline,dev]'
+      - run: python -m pytest
+      - name: Kursvalidierung ohne Originale
+        run: |
+          if [ -f course.yaml ]; then python -m pipeline offline; fi
+  konventionen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pull Request – Branch, Titel und Commits
+        if: github.event_name == 'pull_request'
+        env:
+          BRANCH: ${{ github.head_ref }}
+          TITLE: ${{ github.event.pull_request.title }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python .github/scripts/conventions.py branch "$BRANCH"
+          python .github/scripts/conventions.py subject "$TITLE"
+          python .github/scripts/conventions.py commits "$BASE_SHA" HEAD
+      - name: Push – Branch und Commits
+        if: github.event_name == 'push'
+        env:
+          BRANCH: ${{ github.ref_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          python .github/scripts/conventions.py branch "$BRANCH"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            python .github/scripts/conventions.py commits origin/main HEAD
+          else
+            python .github/scripts/conventions.py commits "$BEFORE" HEAD
+          fi
