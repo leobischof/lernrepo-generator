@@ -17,9 +17,12 @@ python -m pip install -e ".[pipeline,dev]"
 python -m pipeline new "../Meine-Vorlesung-Wissensrepo" --title "Meine Vorlesung" --id meine-vorlesung
 ```
 
-Das Ziel ist ein eigenständiges Git-Repo auf `feature/course-bootstrap`, einschließlich
-Werkzeug, Konfiguration, Agentenanleitung und Tests. Es benötigt den Generator später
-nicht mehr. Keine automatischen Commits, GitHub-Uploads oder Modellaufrufe.
+Das Ziel enthält Werkzeug, Konfiguration, Agentenanleitung und Tests und benötigt
+den Generator später nicht mehr. Ist Git installiert, entsteht ein eigenständiges Repo
+auf `feature/course-bootstrap` mit einem Initialcommit der Grundstruktur. Spätere
+Änderungen lassen sich damit vergleichen. Ohne Git entsteht derselbe nutzbare
+Kursordner; Import, LLM-Verarbeitung, Lernen und Exporte funktionieren ebenfalls.
+GitHub-Uploads und Modellaufrufe erfolgen nicht beim Erstellen.
 
 Im Kursrepo: Originale unter `input/` ablegen, Quellen in `course.yaml` eintragen und
 dem [Arbeitsablauf](docs/arbeitsablauf.md) folgen.

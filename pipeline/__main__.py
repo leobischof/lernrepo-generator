@@ -42,7 +42,7 @@ def main(argv=None):
         elif args.command == "upgrade":
             from .generator import upgrade
             upgrade(args.destination)
-            result = "Werkzeugdateien aktualisiert; Änderungen über PR prüfen"
+            result = "Werkzeugdateien aktualisiert; Änderungen prüfen"
         else:
             from .config import Course
             course = Course(args.root)

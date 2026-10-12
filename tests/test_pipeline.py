@@ -20,7 +20,14 @@ from pipeline.api import run as api
 
 
 @pytest.fixture
-def course(tmp_path):
+def git_available(request, monkeypatch):
+    if not getattr(request, "param", True):
+        original = shutil.which
+        monkeypatch.setattr("pipeline.generator.shutil.which", lambda name: None if name == "git" else original(name))
+
+
+@pytest.fixture
+def course(tmp_path, git_available):
     root = create(tmp_path / "kurs", "Testvorlesung", "testkurs")
     config = yaml.safe_load((root / "course.yaml").read_text(encoding="utf-8"))
     config["sources"] = [dict(id="skript", path="input/skript.txt", kind="script", trust="primary"),
@@ -62,6 +69,7 @@ def answer_all(course):
     return accept(course, "synthetic-test")
 
 
+@pytest.mark.parametrize("git_available", [True, False], indirect=True)
 def test_complete_flow_and_offline_clone(course, tmp_path):
     assert answer_all(course) == 2
     assert accept(course, "synthetic-test") == 0

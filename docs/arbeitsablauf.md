@@ -1,5 +1,14 @@
 # Arbeitsablauf eines neuen Kursrepos
 
+Git ist optional. `new` erzeugt mit installiertem Git einen Initialcommit der
+Grundstruktur auf `feature/course-bootstrap`. Danach zeigen `git diff` Änderungen
+an vorhandenen Dateien und `git status` auch neu erzeugte Dateien. Für einen Diff
+neuer Dateien diese zuerst gezielt mit `git add <dateien>` vormerken und
+`git diff --cached` verwenden. Fehlt eine Git-Identität, verwendet ausschließlich
+der Initialcommit `Lernrepo Generator <lernrepo-generator@localhost>`; die persönliche
+Git-Konfiguration bleibt unverändert. Spätere Commits verwenden die eigene Identität.
+Ohne Git lässt sich der gesamte Lernablauf in demselben Kursordner ausführen.
+
 ## 1. Quellen konfigurieren
 
 ```yaml
@@ -136,11 +145,15 @@ Bewertung gegen Quelle, Ergebnis bestätigen lassen. Persönlicher Fortschritt b
 
 Werkzeugaktualisierung aus dem Generator: `python -m pipeline upgrade <kursrepo>`.
 Lokale Werkzeugänderungen vorher sichern; Upgrade erzeugt nur eine prüfbare Änderung.
+Ohne installiertes Git oder ohne Git-Repo sichert `upgrade` die bisherigen Werkzeuge
+vorher unter `build/upgrade-backups/<kennung>/`. Der Sicherungspfad wird angezeigt.
 Struktur-/Ergebnisformate müssen bei künftigen inkompatiblen Versionen migriert werden.
 
 ## 7. GitHub
 
-Jeder Kurs hat sein eigenes Git-Repo. Originale, extrahierte Volltexte, Fortschritt und
+Mit Git hat jeder Kurs sein eigenes Git-Repo. Ohne Git kann ein Kursordner später
+mit `git init -b feature/course-bootstrap` und einem eigenen Initialcommit versioniert
+werden. Originale, extrahierte Volltexte, Fortschritt und
 Schlüssel bleiben ignoriert. Auch abgeleitete Skriptfassungen und Abbildungsexporte
 vor einem Upload anhand der Nutzungsrechte prüfen. Der Entwicklungsmethodik-Pilot
 bleibt vorerst vollständig lokal; das Titelblatt beschränkt Weitergabe/Bereitstellung.
