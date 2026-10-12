@@ -12,7 +12,7 @@ def build_fingerprint(course):
 
 def generated_hashes(course):
     return {str(p.relative_to(course.root)): file_hash(p)
-            for key in ("content", "learning", "exams") for p in course.path(key).rglob("*")
+            for key in ("content", "learning", "exams", "figures", "blanks") for p in course.path(key).rglob("*")
             if p.is_file() and "progress" not in p.relative_to(course.root).parts}
 
 
@@ -43,6 +43,9 @@ def build(course):
         for number in section["pages"]:
             page = pages[number]
             text += f"## Quelle {section['source']}, PDF S. {number}\n\n{page['text']}\n\n"
+            for transcript in read(course.path("transcripts"), []):
+                if transcript["source"] == section["source"] and transcript["page"] == number:
+                    text += "### Visuell geprüfte Seitentranskription\n\n" + transcript["text"] + "\n\n"
             if page.get("strikeout_candidates"):
                 text += "*Streichungsannotation erkannt; Sichtprüfung erforderlich.*\n\n"
             if page["needs_review"]:
@@ -61,6 +64,12 @@ def build(course):
         title = f"# {job['title']}\n\n**KI-Erklärung, ungeprüft.** Quelle: {job['trust']}.\n\n"
         guide = title + "\n\n".join(f"{x['text']}\n\n*{citation(x['refs'])}*" for x in result["guide"])
         guide += "\n\n" + "\n".join(f"- Unsicherheit: {u}" for u in result["uncertainties"])
+        job_pages = {(p['source'],p['page']) for p in job['sources']}
+        for figure in structure.get('figures',[]):
+            fid=identifier(figure['id'])
+            if (figure['source'],figure['page']) in job_pages and (course.path('figures')/(fid+'.svg')).exists():
+                guide += (f"\n\n[SVG: {figure.get('title',fid)}](../figures/reconstructed/{fid}.svg) · "
+                          f"[Leere Übungsvorlage](../figures/exercises/{fid}-blank.svg)\n")
         write(course.path("learning") / f"{jid}-leitfaden.md", guide + "\n")
         learning_index.append(f"- [{job['title']}]({jid}-leitfaden.md)")
         audio = title + "Verwende nur diesen Kontext für ein ausführliches Lernhörspiel. "
@@ -101,6 +110,18 @@ def figures(course):
     errors = [e for e in errors if not e.startswith("Abschnitt noch ungeprüft")]
     if errors:
         raise ValueError("\n".join(errors))
+    from .figure_tables import table_svg
+    metadata = {f['id']: f for f in read(course.path('structure'))['figures']}
+    for table in read(course.path('figure_tables'), []):
+        fid = identifier(table['id'])
+        figure = metadata.get(fid)
+        source = read(course.path('manifest'))['sources'].get(table.get('source'))
+        if (not figure or not source or table.get('source') != figure['source']
+                or table.get('page') != figure['page'] or not table.get('reviewer')
+                or table.get('reviewed') is not True or table.get('source_sha256') != source['sha256']):
+            raise ValueError('SVG-Tabelle braucht registrierte Figur und aktuelle geprüfte Quelle')
+        write(course.path('figures') / (fid+'.svg'), table_svg(table['title'],table['columns'],table['rows'],
+              f"{table['source']}, PDF S. {table['page']} – visuell abgeglichene Transkription",table.get('weights')))
     for figure in read(course.path("structure"))["figures"]:
         fid = identifier(figure["id"])
         source = read(course.path("manifest"))["sources"][figure["source"]]
@@ -119,6 +140,14 @@ def figures(course):
             if not count:
                 raise ValueError(f"SVG ohne Antwortmarkierungen: {fid}")
             write(course.path("blanks") / f"{fid}-blank.svg", blank)
+            if fid in {t['id'] for t in read(course.path('figure_tables'), [])}:
+                table = next(t for t in read(course.path('figure_tables')) if t['id']==fid)
+                exercise = f"# {table['title']} – Tabellenübung\n\n"
+                exercise += 'Rekonstruiere die Inhalte der Tabelle aus dem Gedächtnis. Die Vorlage enthält die Zeilenbezeichnungen.\n\n'
+                exercise += f"[Leere Vorlage](../../figures/exercises/{fid}-blank.svg)\n\n"
+                exercise += 'Prüfe jede Zelle gegen die [Referenz](../../figures/reconstructed/'+fid+'.svg). '
+                exercise += f"Maßgeblich: {figure['source']}, PDF S. {figure['page']}. Formulierungen, Listen und Werte vollständig wiedergeben.\n"
+                write(course.path('learning')/'drawing-exercises'/(fid+'-zeichenuebung.md'),exercise)
 
 
 def offline(course):
@@ -147,6 +176,14 @@ def offline(course):
                 errors.append(f"{job['job_id']}: {str(exc)[:200]}")
     if jobs and complete < len(jobs):
         warnings.append(f"Lernmaterial unvollständig: {complete}/{len(jobs)} Aufträge")
+    quality = None
+    if jobs:
+        from .quality import audit
+        quality = audit(course)
+        if not quality["ready"]:
+            warnings.append(f"Lernqualität offen: {quality['reviewed_pages']}/{quality['script_pages']} Skriptseiten geprüft; "
+                            f"{len(quality['missing_guide_pages'])} ohne Leitfadenbeleg; "
+                            f"{len(quality['blocked_pages'])} blockiert")
     try:
         assert_build_current(course)
     except ValueError as exc:
@@ -166,5 +203,8 @@ def offline(course):
     text += "\nStrukturprüfungen bestätigen keine fachliche Richtigkeit. KI-Material bleibt ungeprüft.\n"
     write(course.path("reports") / "validation.md", text)
     write(course.path("reports") / "coverage.md", f"# Abdeckung\n\nAbschnitte: {len((current['structure'] or {}).get('sections', []))}\n\n"
-          f"Aktuelle Aufträge: {complete}/{len(jobs)}\n\nFachliche/visuelle Prüfung: nicht automatisch bestätigt.\n")
+          f"Formal gültige Antworten: {complete}/{len(jobs)} (keine fachliche Vollständigkeitsmessung)\n\n"
+          + (f"Geprüfte Skriptseiten: {quality['reviewed_pages']}/{quality['script_pages']}\n\n"
+             f"Seiten ohne Leitfadenbeleg: {len(quality['missing_guide_pages'])}\n\n" if quality else "")
+          + "Fachliche/visuelle Prüfung: nicht automatisch bestätigt.\n")
     return {"errors": errors, "warnings": warnings}

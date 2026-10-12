@@ -58,7 +58,7 @@ def response(job):
                                     solution="Energie bleibt erhalten.", points=None, refs=refs)]
     else:
         result["questions"] = [dict(id="echt", origin="real", prompt="Erklären Sie die Energieerhaltung.",
-                                    solution="Energie bleibt erhalten. (Testantwort)", points=3, refs=refs)]
+                                    solution="", points=3, refs=refs)]
     return result
 
 

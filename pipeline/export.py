@@ -42,12 +42,34 @@ def inline(text):
 
 
 def latex_document(title, markdown):
+    # Tables also need to work directly after a heading or a prose line.
+    normalized, in_table = [], False
+    for line in markdown.splitlines():
+        table_line = line.lstrip().startswith('|')
+        if table_line != in_table:
+            normalized.append('')
+        normalized.append(line)
+        in_table = table_line
+    markdown = '\n'.join(normalized)
     chunks = []
     for paragraph in re.split(r"\n\s*\n", markdown):
         lines = paragraph.splitlines()
         if not lines:
             continue
-        if lines[0].startswith("#"):
+        if lines[0].lstrip().startswith('|') and len(lines) >= 2:
+            rows = [[c.strip().replace(r'\|', '|') for c in re.split(r'(?<!\\)\|', line.strip().strip('|'))]
+                    for line in lines]
+            width = len(rows[0])
+            if (width and all(len(row) == width for row in rows)
+                    and all(re.fullmatch(r':?-{3,}:?', cell) for cell in rows[1])):
+                col = r'>{\raggedright\arraybackslash}p{\dimexpr(\linewidth-2\tabcolsep*' + str(width) + ')/' + str(width) + r'\relax}'
+                row_tex = lambda row: ' & '.join(inline(cell) for cell in row) + r' \\'
+                chunks.append(r'\begin{longtable}{' + col * width + '}\n' +
+                              row_tex(rows[0]) + '\n\\hline\n\\endhead\n' +
+                              '\n'.join(row_tex(row) for row in rows[2:]) + '\n\\end{longtable}')
+            else:
+                chunks.append(inline(paragraph))
+        elif lines[0].startswith("#"):
             for line in lines:
                 match = re.match(r"^(#{1,6})\s+(.*)$", line)
                 if match:
@@ -61,6 +83,7 @@ def latex_document(title, markdown):
             chunks.append(inline(paragraph))
     return (r"\documentclass[11pt,a4paper]{article}" + "\n" +
             r"\usepackage{fontspec,amsmath,amssymb,graphicx}" + "\n" +
+            r"\usepackage{longtable,array}" + "\n" +
             r"\usepackage[margin=25mm]{geometry}" + "\n" +
             r"\usepackage[hidelinks]{hyperref}" + "\n" +
             r"\setlength{\emergencystretch}{3em}" + "\n" +
@@ -77,6 +100,8 @@ def run(course, compile_pdf=False):
     title = course.data["course"]["title"]
     docs = {}
     sections = read(course.path("structure"))["sections"]
+    section_titles = {s['id']: s['title'] for s in sections}
+    from .build import citation
     for section in sections:
         path = course.path("content") / f"{section['id']}-skript.md"
         docs[path.stem] = path.read_text(encoding="utf-8")
@@ -89,10 +114,15 @@ def run(course, compile_pdf=False):
             docs[path.stem] = path.read_text(encoding="utf-8")
     path = course.path("learning") / "musterloesungen.md"
     docs[path.stem] = path.read_text(encoding="utf-8")
+    for path in (course.path('learning')/'drawing-exercises').glob('*.md'):
+        docs[path.stem]=path.read_text(encoding='utf-8')
     docs["gesamtskript"] = "\n\n".join(docs[k] for k in sorted(docs) if k.endswith("-skript"))
     docs["lernfassung-gesamt"] = "\n\n".join(docs[k] for k in sorted(docs) if k.endswith("-leitfaden"))
     produced = []
     for name, text in docs.items():
+        for prefix in ('../../figures/reconstructed/','../../figures/exercises/',
+                       '../figures/reconstructed/','../figures/exercises/'):
+            text=text.replace(prefix,'')
         for extension, body in (("md", text), ("tex", latex_document(title, text))):
             dest = output / f"{name}.{extension}"
             write(dest, body)
@@ -103,8 +133,8 @@ def run(course, compile_pdf=False):
         writer = csv.writer(stream, delimiter="\t")
         writer.writerow(["#html:true"])
         for card in cards:
-            writer.writerow([html.escape(card["front"]), html.escape(card["back"]) + "<br>" +
-                             html.escape(str(card["refs"])) + "<br>KI-Erklärung, ungeprüft", card["section"]])
+            writer.writerow([html.escape(card["front"]).replace('\n','<br>'), html.escape(card["back"]).replace('\n','<br>') + "<br>" +
+                             html.escape(citation(card["refs"])) + "<br>KI-Erklärung, ungeprüft", card["section"]])
     produced.append(tsv)
     if cards:
         import genanki
@@ -116,9 +146,9 @@ def run(course, compile_pdf=False):
         for card in cards:
             section = card["section"]
             decks.setdefault(section, genanki.Deck(stable_id(course.data["course"]["id"] + ":" + section),
-                                                   title + "::" + section))
+                                                   title + "::" + section + ' ' + section_titles.get(section, section)))
             decks[section].add_note(genanki.Note(model=model, fields=[html.escape(card["front"]),
-                html.escape(card["back"]).replace("\n", "<br>") + "<hr>" + html.escape(str(card["refs"])) +
+                html.escape(card["back"]).replace("\n", "<br>") + "<hr>" + html.escape(citation(card["refs"])) +
                 "<br>KI-Erklärung, ungeprüft"], tags=[section, "ki-ungeprueft"],
                 guid=genanki.guid_for(course.data["course"]["id"], card["id"])))
         package = output / "anki-gesamt.apkg"
@@ -127,6 +157,10 @@ def run(course, compile_pdf=False):
     for svg in course.path("figures").glob("*.svg"):
         dest = output / svg.name
         shutil.copy2(svg, dest)
+        produced.append(dest)
+    for svg in course.path('blanks').glob('*.svg'):
+        dest=output/svg.name
+        shutil.copy2(svg,dest)
         produced.append(dest)
     if compile_pdf:
         engine = shutil.which("xelatex") or shutil.which("lualatex")

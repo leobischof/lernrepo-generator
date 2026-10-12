@@ -73,6 +73,9 @@ sie ungültig. `review` niemals ausführen, nur um die Sperre zu umgehen.
 **Agentenmodus:** Agent im Kursrepo starten, `AGENTS.md` lesen lassen und die JSON-Aufträge
 aus `build/jobs/` bearbeiten. Jeder Auftrag enthält Kontext, Schicht/Vertrauen,
 Antwortschema und Hash. Antworten nach `build/results/<job-id>.json` schreiben.
+Für Seiten mit Tabellen oder Bildern gilt zusätzlich der
+[AGY-Qualitätsablauf](agy-qualitaet.md): `prepare-agent` liefert Originalbilder und
+die verbindliche Anleitung zur eigenen Prüfung und Reparatur des Worker-Ergebnisses.
 
 ```powershell
 python -m pipeline accept --model "tatsächlich verwendetes Modell"
