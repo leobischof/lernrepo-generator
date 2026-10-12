@@ -5,8 +5,13 @@ from .io import digest, file_hash, identifier, read, write
 
 
 def state(course):
-    return {"config": course.data, "manifest": read(course.path("manifest")),
-            "structure": read(course.path("structure"))}
+    current = {"config": course.data, "manifest": read(course.path("manifest")),
+               "structure": read(course.path("structure"))}
+    for key in ('transcripts', 'figure_tables'):
+        extra = read(course.path(key), [])
+        if extra:
+            current[key] = extra
+    return current
 
 
 def review(course, reviewer):
@@ -63,6 +68,20 @@ def check_structure(course):
         if extracted.exists() and ex.get("text") and ex["text"] not in page_map(course, ex["source"])[ex["page"]]["text"]:
             errors.append("Auszuschließender Text wurde auf der Seite nicht gefunden")
     figure_ids = set()
+    transcript_pages = set()
+    for entry in current.get("transcripts", []):
+        key = (entry.get("source"), entry.get("page"))
+        source = manifest["sources"].get(entry.get("source"))
+        if (not source or type(entry.get("page")) is not int
+                or not 1 <= entry["page"] <= source["pages"]):
+            errors.append("Transkription mit ungültiger Quellenseite")
+        elif entry.get("source_sha256") != source["sha256"]:
+            errors.append("Transkription gehört nicht zur aktuellen Quelldatei")
+        if key in transcript_pages:
+            errors.append("Doppelte Seitentranskription")
+        transcript_pages.add(key)
+        if not entry.get("text", "").strip() or not entry.get("reviewer") or entry.get("reviewed") is not True:
+            errors.append("Visuelle Transkription braucht Text, Reviewer und Sichtprüfung")
     for figure in structure.get("figures", []):
         fid = identifier(figure["id"])
         if fid in figure_ids:
@@ -82,9 +101,8 @@ def approved(course):
         raise ValueError("Quellen/Struktur nicht freigegeben oder seit Freigabe geändert: review erforderlich")
 
 
-def filtered_text(course, sid, page):
-    text = page_map(course, sid)[page]["text"]
-    for ex in read(course.path("structure"))["exclusions"]:
+def apply_exclusions(course, sid, page, text, exclusions=None):
+    for ex in (read(course.path("structure"))["exclusions"] if exclusions is None else exclusions):
         if ex["source"] == sid and ex["page"] == page:
             if not ex.get("text"):
                 return ""
@@ -92,10 +110,16 @@ def filtered_text(course, sid, page):
     return text
 
 
+def filtered_text(course, sid, page):
+    return apply_exclusions(course, sid, page, page_map(course, sid)[page]["text"])
+
+
 def make_jobs(course):
     approved(course)
     manifest = read(course.path("manifest"))["sources"]
     structure = read(course.path("structure"))
+    transcripts = read(course.path('transcripts'), [])
+    page_maps = {}
     groups = [(s["id"], s["source"], s["pages"], s["title"]) for s in structure["sections"]]
     for sid, entry in manifest.items():
         if entry["spec"]["kind"] != "script":
@@ -106,9 +130,11 @@ def make_jobs(course):
     if limit < 1:
         raise ValueError("max_chars_per_job muss positiv sein")
     for group_id, sid, pages, title in groups:
+        if sid not in page_maps:
+            page_maps[sid] = page_map(course, sid)
         segments, batch, count = [], [], 0
         for page in pages:
-            text = filtered_text(course, sid, page)
+            text = apply_exclusions(course, sid, page, page_maps[sid][page]['text'], structure['exclusions'])
             if not text.strip():
                 continue
             # Long pages split deterministically; none silently truncated.
@@ -127,6 +153,19 @@ def make_jobs(course):
                            trust=manifest[sid]["spec"]["trust"], kind=manifest[sid]["spec"]["kind"],
                            products=course.data["products"], response_schema=SCHEMA,
                            course=course.data["course"])
+            page_keys = {(s['source'], s['page']) for s in sources}
+            visual = [{**entry, 'text': apply_exclusions(course, entry['source'], entry['page'], entry['text'], structure['exclusions'])}
+                      for entry in transcripts
+                      if (entry['source'], entry['page']) in page_keys]
+            visual = [entry for entry in visual if entry['text'].strip()]
+            if sum(len(entry['text']) for entry in visual) > limit:
+                raise ValueError('Visuelle Transkriptionen überschreiten das Kontextlimit; Abschnitt kleiner gliedern')
+            if visual:
+                payload['visual_transcripts'] = visual
+            if payload['kind'] in {'exam', 'exam-collection'}:
+                payload['generation_policy'] = ('Prüfungsquelle ohne mitgelieferten Primärskript-Kontext: '
+                    'nur wortgetreue echte Fragen; solution leer lassen. guide, cards, audio und figures '
+                    'bleiben leer; keine neuen Fragen. Fehlende Belege als uncertainties dokumentieren.')
             payload["input_hash"] = digest({"payload": payload, "system": SYSTEM})
             jobs.append(payload)
     return jobs
@@ -164,6 +203,11 @@ def validate_result(job, result, verify_wording=True):
     refs = {(s["source"], s["page"]) for s in job["sources"]}
     seen = set()
     products = set(job["products"])
+    if job['kind'] in {'exam', 'exam-collection'}:
+        if any(result[field] for field in ('guide', 'cards', 'audio', 'figures')):
+            raise ValueError('Prüfungsquelle allein belegt keine Lernprodukte oder Musterlösungen')
+        if any(q['origin'] != 'real' or q['solution'].strip() for q in result['questions']):
+            raise ValueError('Prüfungsquelle ohne Primärskript-Kontext: nur echte Aufgaben ohne Musterlösung')
     allowed = {"guide": "guide", "cards": "cards", "questions": "questions", "audio": "audio", "figures": "figures"}
     for field in ("guide", "cards", "questions", "audio", "figures"):
         if result[field] and allowed[field] not in products:

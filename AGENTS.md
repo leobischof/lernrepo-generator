@@ -27,10 +27,16 @@ Generiertes `content/`, `learning/`, `exams/`, `reports/` nicht von Hand ändern
 1. `python -m pipeline ingest`, dann Quellen, Seiten und Streichungen prüfen.
 2. Struktur kuratieren, Ausschlüsse mit Begründung eintragen; `review` ausführen.
 3. `plan` erstellt begrenzte Arbeitsaufträge und Kostenschätzung.
-4. Agent: jeden JSON-Auftrag in `build/jobs/` lesen und eine Antwort nach seinem
+4. Agent: zuerst `docs/agy-qualitaet.md` lesen. Bild- oder tabellenhaltige Seiten
+   mit `prepare-agent <job-id> --page <n>` als begrenzte Pakete bearbeiten;
+   deren `WORKFLOW.md` ist verbindlich. Jeder Durchlauf inventarisiert die Quelle,
+   erstellt Material und korrigiert seine Fehler selbst vor der Abgabe.
+   Jeden JSON-Auftrag in `build/jobs/` lesen und eine Antwort nach seinem
    `response_schema` in `build/results/<job-id>.json` schreiben. `accept` übernimmt
    geprüfte Antworten nach `curation/results/`. Alternativ `run-api --start`.
 5. `build`, `export`, `offline`; ungeprüfte Inhalte sichtbar kennzeichnen.
+   Zusätzlich `audit`: gültiges JSON und eine fertige SVG-Aufgabe beweisen weder
+   Quellenabdeckung noch eine tatsächlich erzeugte SVG-Datei.
 
 Jede fachliche Erklärung mit Quelle und PDF-Seite belegen. Gedruckte Seiten nur
 angeben, wenn bekannt. Keine Inhalte erraten. Studentische Unterlagen sind unverifiziert.

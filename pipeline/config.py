@@ -11,6 +11,8 @@ PATHS = {
     "progress": "learning/progress/progress.json", "figures": "figures/reconstructed",
     "blanks": "figures/exercises", "crops": "figures/originals",
     "job_index": "curation/jobs-index.json", "build_state": "reports/build-state.json",
+    "transcripts": "curation/page-transcripts.json", "quality_reviews": "curation/quality-reviews",
+    "figure_tables": "curation/figure-tables.json",
 }
 
 

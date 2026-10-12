@@ -20,6 +20,13 @@ def main(argv=None):
         subs.add_parser(command)
     review = subs.add_parser("review", help="Geprüften Quellen-/Strukturstand freigeben")
     review.add_argument("--reviewer", required=True)
+    subs.add_parser("audit", help="Lernqualität, Seitenlücken und Prüfstatus ausweisen")
+    packet = subs.add_parser("prepare-agent", help="Kleines Arbeitspaket mit Originalseiten vorbereiten")
+    packet.add_argument("job_id")
+    packet.add_argument("--page", action="append", type=int, dest="pages")
+    packet_accept = subs.add_parser("accept-agent", help="Ergebnis und Seitenprüfung eines Arbeitspakets übernehmen")
+    packet_accept.add_argument("packet", type=Path)
+    packet_accept.add_argument("--verified-by", help="Nur nach unabhängiger eigener Quellenprüfung")
     accept = subs.add_parser("accept", help="Agentenantworten validieren und übernehmen")
     accept.add_argument("--model", default="agent:unknown")
     api = subs.add_parser("run-api", help="Ohne --start nur Plan; mit --start kostenpflichtige Verarbeitung")
@@ -55,6 +62,15 @@ def main(argv=None):
             elif args.command == "review":
                 from .jobs import review
                 result = review(course, args.reviewer)
+            elif args.command == "audit":
+                from .quality import audit
+                result = audit(course)
+            elif args.command == "prepare-agent":
+                from .agent import prepare
+                result = prepare(course, args.job_id, args.pages)
+            elif args.command == "accept-agent":
+                from .agent import accept_packet
+                result = accept_packet(course, args.packet, args.verified_by)
             elif args.command == "plan":
                 from .jobs import plan
                 result = plan(course)
