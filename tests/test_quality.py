@@ -90,6 +90,8 @@ def test_worker_cannot_approve_own_output(course):
     job = make_jobs(course)[0]
     info = prepare(course, job['job_id'], [1])
     assert not Path(info['prompt']).is_relative_to(Path(info['packet']))
+    assert not Path(info['review_prompt']).is_relative_to(Path(info['packet']))
+    assert 'NICHT page-review.json' in Path(info['review_prompt']).read_text(encoding='utf-8')
     assert 'Punkte nur wenn angegeben' in read(Path(info['packet'])/'input.json')['system']
     packet = worker_files(course, info)
     accepted = accept_packet(course, packet)

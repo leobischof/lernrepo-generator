@@ -76,7 +76,17 @@ keine Suche außerhalb dieses Pakets, kein Git, keine Tests, keine Installation.
     write(packet / 'WORKFLOW.md', GUIDELINE)
     prompt_path = packet.parent.parent / 'agent-prompts' / (packet.name + '.txt')
     write(prompt_path, prompt)
-    return {'packet': str(packet), 'prompt': str(prompt_path), 'pages': len(focus)}
+    review_prompt_path = prompt_path.with_name(packet.name + '-review.txt')
+    write(review_prompt_path, '''Prüfe result.json gegen die genannten Original-PNGs und WORKFLOW.md.
+Öffne die Originalbilder tatsächlich. Lies NICHT page-review.json oder die Erfolgserzählung des Erstellers.
+Prüfe ALLE Produkte: jede Tabellenzelle, Auslassungen, unbelegte Wertungen und Kausalitäten,
+Geltungsbereiche, Aufgabenpunkte und ein einzelnes Lernziel pro Karte. Bei Bedarf Vertrag in input.json lesen.
+Antworte mit PASS oder FAIL und konkreten Mängeln: JSON-Feld/Karten-ID, problematisches Zitat,
+Quellenwiderspruch und Reparaturkriterium. Keine allgemeinen Qualitätsfloskeln. Kein Zusatzwissen.
+Keine Dateien ändern, keine Shell, kein Git, keine Suche außerhalb. Danach sofort abschließen.
+Originalbilder: ''' + ', '.join(images))
+    return {'packet': str(packet), 'prompt': str(prompt_path),
+            'review_prompt': str(review_prompt_path), 'pages': len(focus)}
 
 
 def accept_packet(course, packet_path, verified_by=None):

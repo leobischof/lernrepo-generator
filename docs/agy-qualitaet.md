@@ -37,6 +37,20 @@ Bei Fehlern: konkreten Quellenwiderspruch an AGY zurückgeben, korrigieren lasse
 erneut prüfen. Keine manuellen fachlichen Änderungen an einem als AGY-Erfolg
 bewerteten Testoutput. Bei Quotenfehlern nicht in einer Wiederholungsschleife laufen.
 
+Bei Tabellen, Bildern und umfangreichen Lernprodukten gehört eine zweite Prüfung
+zum Ablauf. Die Selbstprüfung des Erstellers reicht nicht. Die fachliche Prüfung
+an einen zweiten, frischen AGY-Aufruf delegieren: dasselbe kleine Paket im Read-only-Modus,
+Originalbild plus result.json, ohne die Erfolgserzählung des ersten Workers.
+Prüfauftrag: „Vergleiche jede Tabellenzelle und jede Aussage in allen Produkten mit
+dem Original. Melde konkrete Auslassungen, unbelegte Zusätze, falsche Zuordnungen
+und Vertragsverletzungen mit Fundstelle; ändere keine Dateien.“ Die Mängelliste
+geht zurück an den bearbeitenden Worker. Höchstens zwei Reparaturrunden pro Paket;
+danach verbleibende Mängel als offen dokumentieren und nicht vollständig melden.
+`prepare-agent` gibt dafür einen separaten `review_prompt` außerhalb des Pakets zurück.
+Nicht denselben Gesprächsverlauf fortsetzen. Bei FAIL keine fachliche Freigabe;
+der Ersteller korrigiert, danach prüft der zweite Aufruf das neue Ergebnis erneut.
+Zwei Modellaufrufe sind keine menschliche Prüfung; den tatsächlichen Prüfer benennen.
+
 Wiederkehrende Fehler werden als allgemeine Regel mit einem Gegenbeispiel in der
 Worker-Anleitung ergänzt. Danach denselben schwierigen Fall aus seinem alten
 Ausgangszustand erneut bearbeiten lassen, ohne nachträgliche Reparatur und ohne
