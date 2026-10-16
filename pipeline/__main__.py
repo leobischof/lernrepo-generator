@@ -18,6 +18,15 @@ def main(argv=None):
     upgrade.add_argument("destination", type=Path)
     for command in ("ingest", "inspect", "plan", "build", "figures", "offline"):
         subs.add_parser(command)
+    for command in ('detect-figures', 'figure-icons', 'render-pdf', 'export-notebooklm', 'anki',
+                    'exam-analysis', 'interactive', 'audio-reader', 'package-reader', 'release'):
+        subs.add_parser(command)
+    sync = subs.add_parser('sync-audio', help='Lokale ASR; ohne --start nur Plan')
+    sync.add_argument('--start', action='store_true')
+    sync.add_argument('--model', default='tiny')
+    serve = subs.add_parser('serve', help='Reader nur auf Loopback bereitstellen')
+    serve.add_argument('--port', type=int, default=8765)
+    serve.add_argument('--open', action='store_true')
     review = subs.add_parser("review", help="Geprüften Quellen-/Strukturstand freigeben")
     review.add_argument("--reviewer", required=True)
     accept = subs.add_parser("accept", help="Agentenantworten validieren und übernehmen")
@@ -67,6 +76,44 @@ def main(argv=None):
             elif args.command == "export":
                 from .export import run
                 result = run(course, args.compile_pdf)
+            elif args.command == 'detect-figures':
+                from .figure_tools import detect
+                result = detect(course)
+            elif args.command == 'figure-icons':
+                from .figure_tools import icons
+                result = icons(course)
+            elif args.command == 'render-pdf':
+                from .pdf_export import run
+                result = run(course)
+            elif args.command == 'export-notebooklm':
+                from .chapter_exports import notebooklm
+                result = notebooklm(course)
+            elif args.command == 'anki':
+                from .anki_export import run
+                result = run(course)
+            elif args.command == 'exam-analysis':
+                from .exam_analysis import run
+                result = run(course)
+            elif args.command == 'interactive':
+                from .reader import run
+                result = run(course)
+            elif args.command == 'audio-reader':
+                from .pdf_export import run as pdf
+                from .reader import run as reader
+                result = {'pdf': pdf(course), 'reader': reader(course)}
+            elif args.command == 'sync-audio':
+                from .audio_sync import run
+                result = run(course, model=args.model, start=args.start)
+            elif args.command == 'package-reader':
+                from .reader_package import run
+                result = run(course)
+            elif args.command == 'release':
+                from .release import run
+                result = run(course)
+            elif args.command == 'serve':
+                from .reader_serve import main as serve_main
+                return serve_main(['--directory', str(course.root / 'build/interactive'), '--port', str(args.port)]
+                                  + (['--open'] if args.open else []))
             elif args.command == "progress":
                 from .progress import run
                 if args.action == "record" and None in (args.topic, args.competency, args.score):

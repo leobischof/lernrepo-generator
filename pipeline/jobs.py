@@ -5,8 +5,13 @@ from .io import digest, file_hash, identifier, read, write
 
 
 def state(course):
-    return {"config": course.data, "manifest": read(course.path("manifest")),
-            "structure": read(course.path("structure"))}
+    value = {"config": course.data, "manifest": read(course.path("manifest")),
+             "structure": read(course.path("structure"))}
+    for name in ('text-corrections', 'exam-links'):
+        path = course.root / f'curation/{name}.json'
+        if path.exists():
+            value[name] = read(path)
+    return value
 
 
 def review(course, reviewer):
@@ -24,6 +29,16 @@ def check_structure(course):
     if not manifest or not structure:
         return ["Import oder Struktur fehlt"]
     errors, seen, covered = [], set(), set()
+    try:
+        from .chapters import discover
+        discover(course)
+        from .source_tools import apply_corrections
+        for sid in manifest['sources']:
+            path = course.path('extracted') / f'{identifier(sid)}-pages.json'
+            if path.exists():
+                apply_corrections(course, sid, read(path))
+    except ValueError as exc:
+        errors.append(str(exc))
     for section in structure["sections"]:
         identifier(section["id"])
         if section["id"] in seen:
@@ -169,6 +184,9 @@ def validate_result(job, result, verify_wording=True):
         if result[field] and allowed[field] not in products:
             raise ValueError(f"Nicht bestelltes Lernprodukt: {field}")
         for item in result[field]:
+            if field == 'cards' and item.get('kind') == 'cloze':
+                if not __import__('re').search(r'\{\{c[1-9]\d*::.+?\}\}', item.get('cloze', '')):
+                    raise ValueError('Lückentext braucht mindestens {{c1::Antwort}}')
             if any((r["source"], r["page"]) not in refs for r in item["refs"]):
                 raise ValueError("Quellenverweis außerhalb des Auftrags")
             if "id" in item:

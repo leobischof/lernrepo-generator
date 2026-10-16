@@ -10,7 +10,8 @@ requires-python = ">=3.11"
 dependencies = ["pyyaml>=6", "jsonschema>=4.20"]
 
 [project.optional-dependencies]
-pipeline = ["pymupdf>=1.24", "genanki>=0.13", "markdown>=3.5", "zstandard>=0.22"]
+pipeline = ["pymupdf>=1.24", "genanki>=0.13", "markdown>=3.5", "zstandard>=0.22", "matplotlib>=3.8", "pillow>=10"]
+audio = ["faster-whisper==1.2.1", "av==16.1.0"]
 dev = ["pytest>=8"]
 
 [project.scripts]

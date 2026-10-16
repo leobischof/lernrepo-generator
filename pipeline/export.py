@@ -128,6 +128,15 @@ def run(course, compile_pdf=False):
         dest = output / svg.name
         shutil.copy2(svg, dest)
         produced.append(dest)
+    from .anki_export import run as expanded_anki
+    from .chapters import prefix
+    expanded = expanded_anki(course)
+    for relative in expanded['files']:
+        source = course.local(relative)
+        name = prefix(course) + '-Anki-alle-Typen.apkg' if source.name == 'anki-gesamt.apkg' else source.name
+        dest = output / name
+        shutil.copy2(source, dest)
+        produced.append(dest)
     if compile_pdf:
         engine = shutil.which("xelatex") or shutil.which("lualatex")
         if not engine:
@@ -145,4 +154,6 @@ def run(course, compile_pdf=False):
         for path in produced:
             archive.write(path, path.name)
     write(output / "export-manifest.json", [p.name for p in produced])
+    from .artifacts import index
+    index(course, output, produced, list(course.path('figures').glob('*.svg')))
     return dict(files=len(produced), zip=str(release), cards=len(cards))

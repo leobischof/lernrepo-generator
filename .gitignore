@@ -11,3 +11,7 @@ figures/originals/
 learning/progress/
 build/
 *.log
+audio/
+node_modules/
+output/playwright/
+.playwright-cli/

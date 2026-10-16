@@ -26,7 +26,7 @@ def extract(path, spec):
         from .apkg_reader import read as read_anki
         notes, decks = read_anki(path)
         return [dict(pdf_page=i, text="\n".join(note.fields), extraction="anki-import",
-                     needs_review=True, note_id=note.note_id, decks=decks)
+                     needs_review=True, note_id=note.note_id, fields=list(note.fields), decks=decks)
                 for i, note in enumerate(notes, 1)]
     if path.suffix.lower() in {".md", ".txt", ".tex", ".csv", ".tsv"}:
         return [dict(pdf_page=i, text=text, extraction="text", needs_review=False)
@@ -80,4 +80,6 @@ def run(course):
 
 
 def page_map(course, sid):
-    return {p["pdf_page"]: p for p in read(course.path("extracted") / f"{identifier(sid)}-pages.json", [])}
+    from .source_tools import apply_corrections
+    pages = read(course.path("extracted") / f"{identifier(sid)}-pages.json", [])
+    return {p['pdf_page']: p for p in apply_corrections(course, sid, pages)}

@@ -28,6 +28,10 @@ def run(course):
             if page.get("strikeout_candidates"):
                 flags.append("Streichungsannotation: Sichtprüfung")
             lines.append(f"- PDF/Einheit {number}: {preview or '—'}" + (" **[" + "; ".join(flags) + "]**" if flags else ""))
+    from .source_tools import corrections
+    lines.append('\n## Kuratierte Textkorrekturen\n')
+    for item in corrections(course):
+        lines.append(f"- {item['source']}, PDF {item['page']}: {item['before']!r} → {item['after']!r}; {item['reason']}")
     path = course.path("reports") / "import-review.md"
     write(path, "\n".join(lines) + "\n")
     return {"report": str(path), "sources": len(manifest["sources"])}

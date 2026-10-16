@@ -27,7 +27,7 @@ GitHub-Uploads und Modellaufrufe erfolgen nicht beim Erstellen.
 Im Kursrepo: Originale unter `input/` ablegen, Quellen in `course.yaml` eintragen und
 dem [Arbeitsablauf](docs/arbeitsablauf.md) folgen.
 
-## Erste Version
+## Lernwerkzeuge und Exporte
 
 Implementiert sind PDF-/Text-/Anki-Import, optionales Tesseract-OCR, Quellenmanifest
 mit Hashes, kuratierte Abschnitte und Text-/Seitenausschlüsse, Freigabe mit
@@ -44,6 +44,34 @@ bereinigte Scan-Rekonstruktion wird nicht behauptet. SVG-Aufträge sind noch kei
 visuell geprüften Rekonstruktionen. PDF-Layout, Formeln und Bilder müssen gegen die
 Originale geprüft werden. Native Anthropic-/Gemini-Adapter, fertige Audiodateien,
 automatische Handschriftbewertung und GitHub-Verwaltung sind spätere Erweiterungen.
+
+Der Ausbau vom 16.10.2026 ergänzt frei konfigurierbare Kapitel und Exportpräfixe,
+quellengebundene Textkorrekturen, PDF-Bildkandidaten, lizenzierte lokale SVG-Icons,
+eigenständige NotebookLM-Kontexte je Kapitel, direkte PDFs mit Tabellen/Formeln/eigenen
+SVGs, zusätzliche Anki-Typen und Kapitelpakete sowie eine belegte Prüfungsanalyse.
+Der PDF-/Audio-Reader bietet Suche, Zoom, Zeitmarkierungen, optionale automatische
+Navigation und Offline-Kapitel. Vollständig eingebettete HTML-Kapitel und lokale
+Release-ZIPs lassen sich separat erzeugen. Lokale Whisper-Transkription ist optional
+und startet ausschließlich mit `sync-audio --start`; Audiodateien werden nicht erzeugt.
+
+```powershell
+# Im erzeugten Kursrepo, nach Quellenprüfung und build:
+python -m pipeline render-pdf
+python -m pipeline export-notebooklm
+python -m pipeline anki
+npm ci --prefix interactive --ignore-scripts
+python -m pipeline audio-reader
+python -m pipeline serve --open
+python -m pipeline package-reader
+python -m pipeline release
+```
+
+Für den Reader-Build wird zusätzlich Node.js benötigt; das fertige Reader-ZIP läuft
+mit Python und Browser ohne Node.js oder Internet. `dev.ps1 setup` richtet die
+Werkzeuge ein, `dev.ps1 build|serve|test|package|release` führt die jeweiligen Schritte aus.
+Details, Kapitel-/Audio-Konfiguration und Grenzen:
+[Reader und Exporte](docs/reader-und-exporte.md).
+[Separater Umsetzungsplan](docs/superpowers/plans/2026-10-16-course-tool-parity.md).
 
 Die API-Anbindung nutzt das dokumentierte
 [Chat-Completions-Format](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create).

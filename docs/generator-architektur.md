@@ -28,8 +28,17 @@ Prüfungen ohne Originale. Die Wortlautkontrolle echter Aufgaben erfolgt lokal b
 der Übernahme. Offline kann Quellenbezug/Schema/Hash geprüft werden, aber keine
 erneute Textgegenprobe gegen nicht vorhandene Originale.
 
-Noch auszubauen gegenüber der Industriebetriebslehre-Vorlage: vollständige
-Bereinigung komplexer Scans, automatische Layout-/Abbildungserkennung für beliebige
-Skripte, semantische Kapitelgrenzen, verifizierte SVGs, Prüfungshäufigkeit nach Termin,
-kursspezifische Notenschlüssel, anspruchsvolle Anki-Typen und aufwendige PDF-Layouts.
-Diese Punkte sind nicht mit einem bloßen Umbenennen der Vorlage gelöst.
+Die allgemeinen Export-/Reader-Werkzeuge wurden am 16.10.2026 ergänzt:
+`chapters.py` liefert die fachunabhängigen Kapitel; `artifacts.py` bindet positive
+Dateilisten und relevante Exportquellen an den aktuellen Build. PDF, NotebookLM,
+Anki, Reader und HTML haben jeweils getrennte Module und Ausgabeverzeichnisse.
+`release.py` verpackt ausschließlich aktuelle, unveränderte gelistete Artefakte.
+`new` kopiert alle Laufzeitdateien; `upgrade` prüft deren gespeicherte Hashes und
+Git-Änderungen bzw. sichert ohne Git den ersetzten Werkzeugbestand vollständig.
+
+Weiterhin offen bleiben vollständige Bereinigung beliebiger komplexer Scans,
+semantisch geprüfte Kapitelgrenzen, automatisch verifizierte SVGs und eine fachliche
+Freigabe. Bildgeometrie und lokale Audiozuordnung liefern ungeprüfte Vorschläge.
+Kursspezifische Notenschlüssel werden nicht geraten. PDF-Layouts werden technisch
+getestet, benötigen für reale Formeln/Tabellen/Zeichnungen aber eine Sichtprüfung.
+Nicht unterstützte Formeln bleiben als sichtbarer Quelltext mit Warnung erhalten.

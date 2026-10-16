@@ -1,0 +1,7 @@
+{
+  "name": "lernrepo-kapitelreader",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "node --test reader-timeline.test.mjs reader-offline.test.mjs"},
+  "dependencies": {"pdfjs-dist": "6.4.299"}
+}

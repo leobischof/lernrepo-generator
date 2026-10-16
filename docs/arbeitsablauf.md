@@ -118,6 +118,11 @@ Mathematikbefehle. Komplexe Tabellen/Umgebungen und SVG-Einbettung benötigen we
 Layoutarbeit; unbekannte TeX-Befehle bleiben als Text erhalten. Kein Shell-Escape.
 Das Layout muss visuell geprüft werden; ohne installierte TeX-Engine erfolgt kein PDF-Test.
 
+Alternativ erzeugt `python -m pipeline render-pdf` direkte PDFs ohne TeX-Installation,
+einschließlich Tabellen, Formeln und eigener SVGs. `export-notebooklm` erzeugt
+eigenständige Kapitelkontexte, `anki` die erweiterten Kartentypen und Kapitelpakete.
+Konfiguration und Reader-Ablauf: [Reader und Exporte](reader-und-exporte.md).
+
 ## 5. Abbildungen
 
 LLM-Ergebnisse `learning/figure-jobs.json` enthalten Rekonstruktionsaufträge. Ein Agent
@@ -148,6 +153,10 @@ Lokale Werkzeugänderungen vorher sichern; Upgrade erzeugt nur eine prüfbare Ä
 Ohne installiertes Git oder ohne Git-Repo sichert `upgrade` die bisherigen Werkzeuge
 vorher unter `build/upgrade-backups/<kennung>/`. Der Sicherungspfad wird angezeigt.
 Struktur-/Ergebnisformate müssen bei künftigen inkompatiblen Versionen migriert werden.
+Der Werkzeugumfang umfasst jetzt auch Reader-Quellen, Tests, Startskript und
+mitgelieferte Anleitungen. `.lernrepo-tools.json` erkennt selbst committete lokale
+Anpassungen; diese zuerst separat sichern und bewusst abgleichen. Ein Upgrade
+übernimmt keine Kursdaten und führt keine automatische Freigabe oder Verarbeitung aus.
 
 ## 7. GitHub
 

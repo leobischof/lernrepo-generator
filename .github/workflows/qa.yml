@@ -13,6 +13,16 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -e '.[pipeline,dev]'
       - run: python -m pytest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reader JavaScript und Offline-Verhalten
+        run: |
+          node --check interactive/reader-app.mjs
+          node --check interactive/reader-navigation.mjs
+          node --check interactive/reader-service-worker.mjs
+          node --check interactive/reader-singlefile-boot.mjs
+          npm test --prefix interactive
       - name: Kursvalidierung ohne Originale
         run: |
           if [ -f course.yaml ]; then python -m pipeline offline; fi

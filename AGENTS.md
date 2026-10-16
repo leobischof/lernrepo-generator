@@ -40,6 +40,27 @@ Streichungen nur nach Sichtprüfung ausschließen, keine automatische Gewissheit
 SVG-Rekonstruktionen gegen Original prüfen; Antwortbestandteile mit `class="answer"`.
 Für Hörspiele nur belegte Inhalte verwenden und Unsicherheiten im Kontext behalten.
 
+## Kapitel, Exporte und Reader
+
+- Optionale Kapitelgruppen stehen in `curation/structure.json`; jeder Abschnitt
+  gehört genau einem Kapitel an. Ohne Gruppen bildet jeder Abschnitt ein Kapitel.
+  Exportpräfix: `course.export_prefix`, sonst Kurs-ID. Keine fachfesten Dateinamen.
+- Explizite Textkorrekturen in `curation/text-corrections.json` brauchen Originaltext,
+  Quellenhash, Begründung und `reviewed=true`; rohe Extraktionen bleiben unverändert.
+- `detect-figures` liefert Kandidaten, keine geprüften Rekonstruktionen.
+  `figure-icons` verwendet eine lokale Bibliothek mit Lizenz und Herkunft.
+- Nach `build`: `render-pdf`, `export-notebooklm`, `anki`, `exam-analysis`, `export`.
+  Echte Fragen mit `curation/exam-links.json` zuordnen; unbekannte Termine unbekannt lassen.
+- `audio-reader` baut PDFs und Reader, ohne Transkription oder Modell-Download.
+  `sync-audio` plant nur; `sync-audio --start` erlaubt lokale Whisper-Verarbeitung.
+  Kuratierte Timelines erhalten; Vorschläge sind ungeprüft und hashgebunden.
+- `package-reader` bettet sämtliche Kapitelressourcen in HTML ein; `release` baut
+  ausschließlich lokale ZIPs. `serve` bindet nur Loopback. Keine Veröffentlichung.
+- Erzeugte Kurswerkzeuge einschließlich Reader nur per `upgrade` aktualisieren;
+  `.lernrepo-tools.json` schützt lokale Werkzeuganpassungen. Kursdaten nicht ersetzen.
+- Zusätzliche Prüfungen: `npm test --prefix interactive`; reale Materialien und
+  fertige PDFs benötigen weiterhin eine fachliche/visuelle Prüfung.
+
 ## Lernen
 
 Modus wählen: Verstehen, offene Einzelabfrage, Prüfungssimulation, Zeichnen oder

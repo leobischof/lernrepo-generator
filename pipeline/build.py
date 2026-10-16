@@ -88,6 +88,8 @@ def build(course):
                for s in structure["sections"]}
     write(course.path("exams") / "topic-mapping.json", {"by_section": mapping})
     write(course.path("reports") / "unsicherheiten.md", "# Offene Stellen\n\n" + "\n".join(f"- {u}" for u in uncertainties) + "\n")
+    from .exam_analysis import analyze
+    analyze(course)
     write(course.path("build_state"), {"fingerprint": build_fingerprint(course), "files": generated_hashes(course)})
     return dict(sections=len(structure["sections"]), cards=len(cards), questions=len(questions), figure_jobs=len(figures))
 

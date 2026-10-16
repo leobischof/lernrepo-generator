@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#275e49">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="reader.webmanifest">
+  <link rel="icon" href="reader-icon.svg" type="image/svg+xml">
+  <title>__COURSE_PREFIX__ · Skript hören & verstehen</title>
+  <link rel="stylesheet" href="vendor/web/pdf_viewer.css">
+  <link rel="stylesheet" href="reader.css">
+</head>
+<body class="sidebar-collapsed">
+  <div class="workspace">
+    <aside class="navigation-sidebar" aria-label="PDF-Navigation">
+      <nav class="navigation-rail" aria-label="Navigationsansicht">
+        <button id="toggle-navigation" title="PDF-Navigation öffnen" aria-label="PDF-Navigation öffnen" aria-expanded="false" aria-controls="navigation-body">☰</button>
+        <button id="show-outline" title="Kapitel und Inhaltsverzeichnis" aria-label="Kapitel und Inhaltsverzeichnis" aria-pressed="true">☷</button>
+        <button id="show-thumbnails" title="Seitenminiaturen" aria-label="Seitenminiaturen" aria-pressed="false">▤</button>
+      </nav>
+      <div class="navigation-body" id="navigation-body" inert>
+        <h2 id="navigation-title">Kapitel & Inhalt</h2>
+        <div id="pdf-outline"></div>
+        <div id="pdf-thumbnails" hidden></div>
+      </div>
+    </aside>
+    <main class="document-pane">
+      <div class="pdf-toolbar" aria-label="PDF-Werkzeuge">
+        <div class="toolbar-pages">
+        <button id="previous" aria-label="Vorherige Seite">←</button>
+        <label>Seite <input id="page" type="number" min="1" value="1" aria-label="PDF-Seite"></label>
+        <span id="pages">/ –</span><button id="next" aria-label="Nächste Seite">→</button>
+        <button id="zoom-out" aria-label="PDF verkleinern" title="PDF verkleinern">−</button>
+        <select id="zoom" aria-label="Zoom"><option value="page-width">Seitenbreite</option><option value="page-fit">Ganze Seite</option><option value="0.5">50 %</option><option value="0.75">75 %</option><option value="1">100 %</option><option value="1.25">125 %</option><option value="1.5">150 %</option><option value="2">200 %</option><option value="3">300 %</option></select>
+        <button id="zoom-in" aria-label="PDF vergrößern" title="PDF vergrößern">+</button>
+        </div>
+        <div class="toolbar-chapter">
+          <a class="brand" href="reader.html" aria-label="__COURSE_PREFIX__ Kapitelreader"><b>__COURSE_PREFIX__</b></a>
+          <label class="chapter-label"><select id="chapters" aria-label="Kapitel auswählen"></select></label>
+        </div>
+        <div class="toolbar-actions">
+        <form id="search-form"><input id="search" type="search" placeholder="Im PDF suchen …" aria-label="Suchbegriff"><button>Suchen</button></form>
+        <span id="matches" aria-live="polite"></span>
+        <a id="pdf-download" download>PDF öffnen ↗</a>
+        </div>
+      </div>
+      <div class="pdf-stage"><div id="viewerContainer" tabindex="0" aria-label="PDF-Dokument"><div id="viewer" class="pdfViewer"></div></div></div>
+      <section class="media-timeline" aria-label="Audio- und Video-Timeline">
+        <output id="timeline-time" aria-label="Aktuelle Wiedergabezeit">0:00</output>
+        <div class="timeline-track">
+          <div id="timeline-cues" aria-hidden="true"></div>
+          <input id="media-seek" type="range" min="0" max="0" step="0.1" value="0" aria-label="Wiedergabeposition in Sekunden" disabled>
+        </div>
+        <output id="timeline-duration" aria-label="Mediendauer">–:–</output>
+      </section>
+    </main>
+    <aside class="sidebar" id="sidebar" aria-label="Audio und Markierungen">
+      <nav class="sidebar-rail" aria-label="Schnellsteuerung">
+        <button id="toggle-sidebar" aria-label="Seitenleiste öffnen" aria-expanded="false" aria-controls="sidebar-body" title="Seitenleiste öffnen">☰</button>
+        <button id="mini-play" aria-label="Audio abspielen" title="Audio abspielen" disabled>▶</button>
+        <button id="mini-back" aria-label="10 Sekunden zurück" title="10 Sekunden zurück" disabled>↶<small>10</small></button>
+        <button id="mini-forward" aria-label="10 Sekunden vor" title="10 Sekunden vor" disabled>↷<small>10</small></button>
+        <span class="rail-divider" aria-hidden="true"></span>
+        <button id="mini-mute" aria-label="Stummschalten" title="Stummschalten" aria-pressed="false" disabled>♪</button>
+        <button id="mini-speed" aria-label="Wiedergabetempo ändern, aktuell 1-fach" title="Wiedergabetempo ändern" disabled>1×</button>
+        <span class="rail-divider" aria-hidden="true"></span>
+        <button id="mini-follow" aria-label="Autoscroller einschalten" title="Autoscroller einschalten" aria-pressed="false">↪</button>
+        <button id="mini-marks" aria-label="Markierungen ausblenden" title="Markierungen ausblenden" aria-pressed="true">▣</button>
+        <output id="mini-time" aria-label="Wiedergabezeit">0:00</output>
+      </nav>
+      <div class="sidebar-body" id="sidebar-body">
+      <h1 id="chapter-title">Kapitel wird geladen …</h1>
+      <section class="player-card" aria-label="Audiowiedergabe">
+        <span class="section-label">Kapitelerklärung</span>
+        <audio id="audio" controls preload="metadata"></audio>
+        <video id="video" controls preload="metadata" hidden></video>
+        <label class="speed">Tempo <select id="speed"><option value="0.75">0,75×</option><option value="1" selected>1×</option><option value="1.25">1,25×</option><option value="1.5">1,5×</option><option value="2">2×</option></select></label>
+        <label class="toggle"><input id="follow" type="checkbox"> Autoscroller: der Erklärung folgen</label>
+        <label class="toggle"><input id="show-marks" type="checkbox" checked> Markierungen anzeigen</label>
+        <p class="small">Selbst scrollen schaltet den Autoscroller aus. Das Audio läuft weiter.</p>
+      </section>
+      <div id="status" class="notice" role="status">PDF und Audio werden geladen …</div>
+      <section class="cue-section">
+        <div class="section-heading"><h2>Erklärte Stellen</h2><span id="cue-count"></span></div>
+        <p class="small">Automatische Vorschläge bitte beim Hören prüfen. Ein Klick springt zu Audio und PDF-Stelle.</p>
+        <div id="cues" class="cues"></div>
+      </section>
+      <details id="editor">
+        <summary>Markierungen korrigieren</summary>
+        <p class="small">Vorschlag auswählen oder eine neue Markierung aufziehen. Im Zeichenmodus ist die Textauswahl kurz deaktiviert.</p>
+        <div class="row"><select id="draw-type" aria-label="Markierungstyp"><option value="rect">Rechteck</option><option value="highlight">Hervorhebung</option><option value="arrow">Pfeil</option></select><button id="draw">Auf PDF zeichnen</button></div>
+        <form id="annotation-form">
+          <label>Beschreibung <input id="label" maxlength="200"></label>
+          <div class="row"><label>Start (Sek.) <input id="start" type="number" min="0" step="0.1" required></label><label>Ende (Sek.) <input id="end" type="number" min="0" step="0.1" required></label></div>
+          <label>PDF-Seite <input id="annotation-page" type="number" min="1" required></label>
+          <label>Koordinaten (0–1, x/y/Breite/Höhe; Pfeil: x1/y1/x2/y2)<input id="geometry" placeholder="0.1, 0.2, 0.5, 0.1" required></label>
+          <label class="toggle"><input id="reviewed" type="checkbox"> Inhaltlich geprüft</label>
+          <label>Animation <select id="animation"><option value="none">Keine</option><option value="pulse">Sanftes Pulsieren</option></select></label>
+          <p id="excerpt" class="excerpt"></p>
+          <div class="row"><button id="save" type="submit">Änderung speichern</button><button id="delete" type="button">Entfernen</button></div>
+        </form>
+        <div class="row"><button id="export">Timeline herunterladen</button><label class="file-button">Timeline laden<input id="import" type="file" accept="application/json,.json" hidden></label></div>
+        <p class="small">Änderungen werden zusätzlich nur in diesem Browser gespeichert. Zum dauerhaften Übernehmen die Timeline herunterladen.</p>
+      </details>
+      <section class="offline-section">
+        <button id="offline-save" disabled>Kapitel offline speichern</button>
+        <p id="offline-status" class="small"></p>
+      </section>
+      <footer>KI-Erklärungen sind ungeprüft. Die angegebenen Primärquellen sind maßgeblich.</footer>
+      </div>
+    </aside>
+  </div>
+  <script type="module" src="reader-app.mjs"></script>
+</body>
+</html>

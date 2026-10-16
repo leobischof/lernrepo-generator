@@ -14,7 +14,8 @@ TEXT = {"type": "string", "minLength": 1}
 SCHEMA = obj({
     "job_id": TEXT, "input_hash": TEXT,
     "guide": {"type": "array", "items": obj({"text": TEXT, "refs": REFS})},
-    "cards": {"type": "array", "items": obj({"id": TEXT, "front": TEXT, "back": TEXT, "refs": REFS})},
+    "cards": {"type": "array", "items": obj({"id": TEXT, "front": TEXT, "back": TEXT, "refs": REFS,
+              "kind": {"enum": ["basic", "cloze"]}, "cloze": TEXT}, required=['id', 'front', 'back', 'refs'])},
     "questions": {"type": "array", "items": obj({
         "id": TEXT, "origin": {"enum": ["real", "generated"]}, "prompt": TEXT,
         "solution": {"type": "string"}, "points": {"type": ["number", "null"], "minimum": 0},
@@ -36,6 +37,7 @@ Seite belegbar sein. Keine erfundenen Belege. Unklare OCR, fehlende Lösungen od
 unter uncertainties nennen. Kein Zusatzwissen als Skriptwissen ausgeben.
 guide: zuerst Kern, dann ALLE prüfungsrelevanten Listen/Definitionen des Abschnitts.
 cards: atomare offene Fragen, eindeutige Antworten, stabile kurze IDs.
+Optional kind=cloze mit cloze="{{c1::Antwort}} ..."; ohne kind gilt basic.
 questions: echte Aufgaben nur bei Aufgaben-Quellen wortgetreu als real übernehmen;
 Punkte nur wenn angegeben, sonst null. Neue Transfer-/Verständnisaufgaben generated nennen.
 Musterlösungen sind KI-Erklärung; fehlende fachliche Grundlage in uncertainties nennen.
